@@ -38,6 +38,21 @@ The daily log (`logs/YYYY-MM-DD.md`) will be expanded beyond just meals and calo
   - Gemini analyzes the Desi cuisine, estimates the portion sizes, and returns a JSON payload with `description`, `estimated_calories`, and `estimated_protein`.
   - The app instantly populates the manual entry fields with these calculated macros, allowing the user to review and save them to the daily log.
 
+### G. Dynamic Date Navigation (History Viewer & Retroactive Logging)
+- **Feature:** An interactive date picker in the header replacing the static date pill.
+- **Implementation:**
+  - The user can click the current date and select any past date from a standard calendar input.
+  - When a new date is selected, the app updates the `todayDate` state and instantly re-triggers the GitHub API to fetch `logs/YYYY-MM-DD.md` for that specific date.
+  - This turns the entire PWA into a history viewer, allowing the user to scroll through past days to see what they ate, their water/sleep/energy levels, and their total macros.
+  - Furthermore, it enables **retroactive logging**: users can navigate to a past date and log a forgotten meal or workout, which will be safely appended to that historical date's markdown file.
+
+### H. Customizable Macro Targets
+- **Feature:** The user can edit their daily Calorie and Protein goals, instead of relying on hardcoded baselines.
+- **Implementation:**
+  - Add two new input fields in the **Settings Tab** for "Daily Calorie Target (kcal)" and "Daily Protein Target (g)".
+  - These values are saved securely to the device's `localStorage`.
+  - The Dashboard's progress bars and remaining macro calculations dynamically read from these user-defined targets (defaulting to 2,000 kcal and 140g protein if unset).
+
 ## 3. Architecture & Tech Stack
 *   **Tech Stack:** React (Vite), TypeScript, Tailwind CSS, Shadcn UI, Lucide Icons.
 *   **Hosting:** GitHub Pages via GitHub Actions.
@@ -66,7 +81,13 @@ The daily log (`logs/YYYY-MM-DD.md`) will be expanded beyond just meals and calo
 - Add the `<input type="file" capture="environment" />` button to the Workout Logger and link it to the API response parser.
 - **Unified AI Meal Scanner:** Embed a "🪄 Auto-Fill Macros" button directly next to the "What did you eat?" input field. When tapped, it passes the description (or uploaded image) to Gemini, which calculates the macros and instantly populates the standard Calories and Protein input fields within the same form before saving.
 
-### Phase 5: Verification & Deployment
+### Phase 5: Dynamic Navigation & Configurable Targets
+- Update `App.tsx` header to replace the static date display with a native HTML5 `<input type="date">` component.
+- Bind the date picker to the `todayDate` state, triggering `loadData()` whenever the user scrolls to a past date.
+- Update the Settings tab to manage `targetCalories` and `targetProtein` states, persisting them to `localStorage`.
+- Update the Github parser and Dashboard components to utilize these dynamic targets (setting the protein default to 140g).
+
+### Phase 6: Verification & Deployment
 - Test markdown string generation to ensure tables and sections don't break.
 - Verify the PWA deployment on GitHub Pages.
 

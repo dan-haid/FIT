@@ -231,7 +231,9 @@ export function appendMealToLog(
   mealType: "Breakfast" | "Lunch" | "Dinner" | "Snacks",
   description: string,
   calories: number,
-  protein: number
+  protein: number,
+  targetCalories: number = 2000,
+  targetProtein: number = 140
 ): string {
   let doc = markdown;
   
@@ -260,8 +262,8 @@ export function appendMealToLog(
 ---
 
 ## Daily Totals
-- **Calories Eaten:** **~0 kcal** / 2,000 kcal max *(2,000 kcal remaining)*
-- **Protein Eaten:** **~0g** / 120-150g target *(120-150g remaining)*
+- **Calories Eaten:** **~0 kcal** / ${targetCalories} kcal max *(${targetCalories} kcal remaining)*
+- **Protein Eaten:** **~0g** / ${targetProtein}g target *(${targetProtein}g remaining)*
 
 ## Notes & Feeling
 - Logged via PWA
@@ -317,13 +319,17 @@ export function appendMealToLog(
 
   // Recalculate section header calorie/protein numbers
   let newDoc = lines.join("\n");
-  newDoc = recalculateTotals(newDoc);
+  newDoc = recalculateTotals(newDoc, targetCalories, targetProtein);
   
   return newDoc;
 }
 
 // Updates the daily totals in logs/YYYY-MM-DD.md
-function recalculateTotals(markdown: string): string {
+export function recalculateTotals(
+  markdown: string,
+  targetCalories: number = 2000,
+  targetProtein: number = 140
+): string {
   const lines = markdown.split("\n");
   
   let breakfastCalories = 0, breakfastProtein = 0;
@@ -386,15 +392,15 @@ function recalculateTotals(markdown: string): string {
   const totalCalories = breakfastCalories + lunchCalories + dinnerCalories + snackCalories;
   const totalProtein = breakfastProtein + lunchProtein + dinnerProtein + snackProtein;
 
-  const calRemaining = Math.max(0, 2000 - totalCalories);
+  const calRemaining = Math.max(0, targetCalories - totalCalories);
   
   // Find and update totals block
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].includes("- **Calories Eaten:**")) {
-      lines[i] = `- **Calories Eaten:** **~${totalCalories} kcal** / 2,000 kcal max *(${calRemaining} kcal remaining)*`;
+      lines[i] = `- **Calories Eaten:** **~${totalCalories} kcal** / ${targetCalories} kcal max *(${calRemaining} kcal remaining)*`;
     }
     if (lines[i].includes("- **Protein Eaten:**")) {
-      lines[i] = `- **Protein Eaten:** **~${totalProtein}g** / 120-150g target *(${Math.max(0, 120 - totalProtein)}-${Math.max(0, 150 - totalProtein)}g remaining)*`;
+      lines[i] = `- **Protein Eaten:** **~${totalProtein}g** / ${targetProtein}g target *(${Math.max(0, targetProtein - totalProtein)}g remaining)*`;
     }
   }
 

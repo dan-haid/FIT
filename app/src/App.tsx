@@ -99,6 +99,16 @@ export default function App() {
   const [todaySha, setTodaySha] = useState<string | null>(null);
   const [totals, setTotals] = useState({ calories: 0, protein: 0 });
 
+  // Custom Macro Targets
+  const [targetCalories, setTargetCalories] = useState<number>(() => {
+    return parseInt(localStorage.getItem("target_calories") || "2000");
+  });
+  const [targetProtein, setTargetProtein] = useState<number>(() => {
+    return parseInt(localStorage.getItem("target_protein") || "140"); // Default protein target to 140g
+  });
+  const [targetCaloriesInput, setTargetCaloriesInput] = useState(targetCalories.toString());
+  const [targetProteinInput, setTargetProteinInput] = useState(targetProtein.toString());
+
   // Refs for camera uploads
   const machineFileRef = useRef<HTMLInputElement>(null);
   const foodFileRef = useRef<HTMLInputElement>(null);
@@ -111,14 +121,15 @@ export default function App() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const todayDate = getTodayDateString();
+  // Interactive Date Selector State
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
 
   // Load configuration and data
   useEffect(() => {
     if (token) {
       loadData();
     }
-  }, [token]);
+  }, [token, selectedDate]);
 
   const loadData = async () => {
     setLoading(true);
@@ -131,7 +142,7 @@ export default function App() {
       setHistory(parsedHistory);
 
       // 2. Fetch today's log
-      const logPath = `logs/${todayDate}.md`;
+      const logPath = `logs/${selectedDate}.md`;
       const todayFile = await getFile(logPath);
       setTodayLog(todayFile.content);
       setTodaySha(todayFile.sha);
@@ -193,6 +204,21 @@ export default function App() {
     setGeminiKeyInput("");
   };
 
+  const handleSaveTargets = () => {
+    const cals = parseInt(targetCaloriesInput);
+    const prot = parseInt(targetProteinInput);
+    if (isNaN(cals) || isNaN(prot)) {
+      toast.error("Please enter valid numbers");
+      return;
+    }
+    localStorage.setItem("target_calories", cals.toString());
+    localStorage.setItem("target_protein", prot.toString());
+    setTargetCalories(cals);
+    setTargetProtein(prot);
+    toast.success(`Macro targets updated: ${cals} kcal & ${prot}g protein!`);
+    loadData(); // Re-trigger totals/remaining metrics recalculation!
+  };
+
   const handleLogout = () => {
     clearGithubToken();
     clearGeminiKey();
@@ -218,7 +244,7 @@ export default function App() {
     setLoading(true);
     try {
       const weightNum = parseFloat(weight);
-      const updatedTracker = appendBodyWeight(trackerContent, todayDate, weightNum, weightNotes);
+      const updatedTracker = appendBodyWeight(trackerContent, selectedDate, weightNum, weightNotes);
       await updateFile("workout_tracker.md", updatedTracker, trackerSha, `Log body weight: ${weightNum} kg`);
       
       setTrackerContent(updatedTracker);
@@ -237,8 +263,8 @@ export default function App() {
   const handleLogHealthMetrics = async () => {
     setLoading(true);
     try {
-      const logPath = `logs/${todayDate}.md`;
-      const updatedLog = appendHealthMetrics(todayLog, todayDate, water, sleepHours, sleepQuality, energy);
+      const logPath = `logs/${selectedDate}.md`;
+      const updatedLog = appendHealthMetrics(todayLog, selectedDate, water, sleepHours, sleepQuality, energy);
       await updateFile(logPath, updatedLog, todaySha, `Update health metrics: Water: ${water}L, Sleep: ${sleepHours}h`);
       
       toast.success("Health metrics synced successfully!");
@@ -269,7 +295,7 @@ export default function App() {
       const updatedTracker = appendExerciseLift(
         trackerContent,
         workoutCategory,
-        todayDate,
+        selectedDate,
         finalExerciseName,
         liftWeight,
         liftSetsReps || "*Unrecorded*",
@@ -306,17 +332,19 @@ export default function App() {
 
     setLoading(true);
     try {
-      const logPath = `logs/${todayDate}.md`;
+      const logPath = `logs/${selectedDate}.md`;
       const cals = mealCals ? parseInt(mealCals) : 0;
       const prot = mealProtein ? parseInt(mealProtein) : 0;
 
       const updatedLog = appendMealToLog(
         todayLog,
-        todayDate,
+        selectedDate,
         mealType,
         mealDesc.trim(),
         cals,
-        prot
+        prot,
+        targetCalories,
+        targetProtein
       );
 
       await updateFile(logPath, updatedLog, todaySha, `Log meal: ${mealType} - ${mealDesc.trim()}`);
@@ -507,8 +535,13 @@ export default function App() {
           >
             <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
-          <div className="text-xs font-semibold px-2.5 py-1 bg-neutral-900 rounded-full text-neutral-400 border border-neutral-800">
-            {todayDate}
+          <div className="relative flex items-center">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="text-[11px] font-semibold px-2 py-1 bg-neutral-900 rounded-full text-neutral-300 border border-neutral-800 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer w-28 text-center"
+            />
           </div>
         </div>
       </header>
@@ -532,16 +565,16 @@ export default function App() {
                 <div className="flex flex-col gap-1.5">
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="text-neutral-300">Calories Intake</span>
-                    <span className="text-neutral-200">{totals.calories} / 2,000 kcal</span>
+                    <span className="text-neutral-200">{totals.calories} / {targetCalories} kcal</span>
                   </div>
                   <div className="h-3 w-full bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
                     <div 
                       className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
-                      style={{ width: `${Math.min(100, (totals.calories / 2000) * 100)}%` }}
+                      style={{ width: `${Math.min(100, (totals.calories / targetCalories) * 100)}%` }}
                     />
                   </div>
                   <p className="text-[10px] text-neutral-400 text-right font-medium">
-                    {Math.max(0, 2000 - totals.calories)} kcal remaining
+                    {Math.max(0, targetCalories - totals.calories)} kcal remaining
                   </p>
                 </div>
 
@@ -549,16 +582,16 @@ export default function App() {
                 <div className="flex flex-col gap-1.5">
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="text-neutral-300">Protein Intake</span>
-                    <span className="text-neutral-200">{totals.protein} / 120g target</span>
+                    <span className="text-neutral-200">{totals.protein} / {targetProtein}g target</span>
                   </div>
                   <div className="h-3 w-full bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
                     <div 
                       className="h-full bg-primary rounded-full transition-all duration-500" 
-                      style={{ width: `${Math.min(100, (totals.protein / 120) * 100)}%` }}
+                      style={{ width: `${Math.min(100, (totals.protein / targetProtein) * 100)}%` }}
                     />
                   </div>
                   <p className="text-[10px] text-neutral-400 text-right font-medium">
-                    {Math.max(0, 120 - totals.protein)}g remaining (to reach 120g baseline)
+                    {Math.max(0, targetProtein - totals.protein)}g remaining (to reach {targetProtein}g target)
                   </p>
                 </div>
               </CardContent>
@@ -1063,6 +1096,50 @@ export default function App() {
               <CardFooter>
                 <Button variant="destructive" className="w-full font-semibold gap-2" onClick={handleLogout}>
                   <LogOut className="size-4" /> Clear Token & Disconnect
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Daily Macro Targets Settings */}
+            <Card className="bg-neutral-900 border-neutral-800 text-neutral-100 border-primary/20">
+              <CardHeader>
+                <CardTitle className="text-base font-semibold flex items-center gap-2 text-white">
+                  <TrendingUp className="size-5 text-emerald-500" /> Daily Macro Targets
+                </CardTitle>
+                <CardDescription className="text-neutral-400">Configure your daily calorie and protein goals</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <div className="flex gap-4">
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <Label htmlFor="target-calories" className="text-xs text-neutral-300">Calories Goal (kcal)</Label>
+                    <Input
+                      id="target-calories"
+                      type="number"
+                      placeholder="2000"
+                      value={targetCaloriesInput}
+                      onChange={(e) => setTargetCaloriesInput(e.target.value)}
+                      className="bg-neutral-950 border-neutral-800 focus-visible:ring-primary text-xs h-9"
+                    />
+                  </div>
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <Label htmlFor="target-protein" className="text-xs text-neutral-300">Protein Goal (g)</Label>
+                    <Input
+                      id="target-protein"
+                      type="number"
+                      placeholder="140"
+                      value={targetProteinInput}
+                      onChange={(e) => setTargetProteinInput(e.target.value)}
+                      className="bg-neutral-950 border-neutral-800 focus-visible:ring-primary text-xs h-9"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  onClick={handleSaveTargets}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs h-9 gap-1.5"
+                >
+                  <Save className="size-4" /> Save Macro Targets
                 </Button>
               </CardFooter>
             </Card>
