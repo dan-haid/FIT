@@ -400,3 +400,92 @@ function recalculateTotals(markdown: string): string {
 
   return lines.join("\n");
 }
+
+// Appends or updates water intake, sleep quality, and energy levels in logs/YYYY-MM-DD.md
+export function appendHealthMetrics(
+  markdown: string,
+  date: string,
+  water: number,
+  sleepHours: number,
+  sleepQuality: string,
+  energy: number
+): string {
+  let doc = markdown;
+  
+  if (!doc) {
+    doc = `# Daily Log: ${date}
+
+- **Morning Weight:** [Pending] kg
+- **Gym Today?** [Pending - Yes/No]
+- **Apple Watch Active Burn:** [Pending] kcal
+- **Water Intake:** [Pending] Liters
+- **Sleep:** [Pending] hours (Quality: [Pending])
+- **Energy Level:** [Pending]/10
+
+## Meals Eaten
+
+### Breakfast / Meal 1 (~0 kcal | 0g protein)
+- [Pending]
+
+### Lunch (~0 kcal | 0g protein)
+- [Pending]
+
+### Dinner (~0 kcal | 0g protein)
+- [Pending]
+
+### Snacks / Supplements / Protein Shake (~0 kcal | 0g protein)
+- [Pending]
+
+---
+
+## Daily Totals
+- **Calories Eaten:** **~0 kcal** / 2,000 kcal max *(2,000 kcal remaining)*
+- **Protein Eaten:** **~0g** / 120-150g target *(120-150g remaining)*
+
+## Notes & Feeling
+- Logged via PWA
+`;
+  }
+
+  const lines = doc.split("\n");
+  
+  const waterLine = `- **Water Intake:** **${water.toFixed(1)} Liters**`;
+  const sleepLine = `- **Sleep:** **${sleepHours.toFixed(1)} hours** (Quality: **${sleepQuality}**)`;
+  const energyLine = `- **Energy Level:** **${energy}/10**`;
+
+  // Update or insert Water Intake
+  const waterIndex = lines.findIndex((l) => l.includes("- **Water Intake:**"));
+  if (waterIndex !== -1) {
+    lines[waterIndex] = waterLine;
+  } else {
+    const weightIndex = lines.findIndex((l) => l.includes("- **Morning Weight:**"));
+    if (weightIndex !== -1) {
+      lines.splice(weightIndex + 1, 0, waterLine);
+    }
+  }
+
+  // Update or insert Sleep
+  const sleepIndex = lines.findIndex((l) => l.includes("- **Sleep:**"));
+  if (sleepIndex !== -1) {
+    lines[sleepIndex] = sleepLine;
+  } else {
+    const waterIdx = lines.findIndex((l) => l.includes("- **Water Intake:**"));
+    if (waterIdx !== -1) {
+      lines.splice(waterIdx + 1, 0, sleepLine);
+    }
+  }
+
+  // Update or insert Energy Level
+  const energyIndex = lines.findIndex((l) => l.includes("- **Energy Level:**"));
+  if (energyIndex !== -1) {
+    lines[energyIndex] = energyLine;
+  } else {
+    const sleepIdx = lines.findIndex((l) => l.includes("- **Sleep:**"));
+    if (sleepIdx !== -1) {
+      lines.splice(sleepIdx + 1, 0, energyLine);
+    }
+  }
+
+  return lines.join("\n");
+}
+
