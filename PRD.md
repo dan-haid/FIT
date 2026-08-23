@@ -58,13 +58,13 @@ The daily log (`logs/YYYY-MM-DD.md`) will be expanded beyond just meals and calo
 ### Phase 3: UI Enhancement
 - **Dashboard:** Add input cards for Water, Sleep, and Energy.
 - **Workout Logger:** Update the Overload History UI to render a list of the last 3-5 sessions. Implement the massive static exercise list in the select dropdown.
-- **Meal Logger:** Add the "Favorites Quick-Log" button group above the manual entry form.
+- **Meal Logger:** Unify the manual entry form with the AI Auto-Fill feature. Add the "Favorites Quick-Log" button group above the single, unified meal input form.
 
 ### Phase 4: AI Vision Integration (Gemini)
 - Update the **Settings Tab** to include an input for the Google Gemini API Key.
 - Create `src/lib/gemini.ts` to handle base64 image compression and the REST call to `generativelanguage.googleapis.com`.
 - Add the `<input type="file" capture="environment" />` button to the Workout Logger and link it to the API response parser.
-- Add an "AI Scan Plate / Describe Meal" button to the Meal Logger, linking it to the Gemini API to auto-calculate macros for Desi food based on the user's profile context.
+- **Unified AI Meal Scanner:** Embed a "🪄 Auto-Fill Macros" button directly next to the "What did you eat?" input field. When tapped, it passes the description (or uploaded image) to Gemini, which calculates the macros and instantly populates the standard Calories and Protein input fields within the same form before saving.
 
 ### Phase 5: Verification & Deployment
 - Test markdown string generation to ensure tables and sections don't break.

@@ -93,7 +93,6 @@ export default function App() {
   const [mealDesc, setMealDesc] = useState("");
   const [mealCals, setMealCals] = useState("");
   const [mealProtein, setMealProtein] = useState("");
-  const [foodDescriptionAI, setFoodDescriptionAI] = useState("");
 
   // Today's log state
   const [todayLog, setTodayLog] = useState("");
@@ -325,7 +324,6 @@ export default function App() {
       setMealDesc("");
       setMealCals("");
       setMealProtein("");
-      setFoodDescriptionAI("");
       await loadData();
     } catch (error: any) {
       toast.error("Error saving meal: " + error.message);
@@ -386,7 +384,7 @@ export default function App() {
     toast.info("AI is analyzing food plate...");
     try {
       const base64 = await fileToBase64(file);
-      const result = await analyzeMeal(foodDescriptionAI, base64, file.type);
+      const result = await analyzeMeal(mealDesc, base64, file.type);
       
       setMealDesc(result.description);
       setMealCals(result.estimated_calories.toString());
@@ -403,8 +401,8 @@ export default function App() {
 
   // Text-only food analyzer
   const handleAnalyzeFoodText = async () => {
-    if (!foodDescriptionAI.trim()) {
-      toast.error("Please describe your food first (e.g. 2 plates murgh chanay)");
+    if (!mealDesc.trim()) {
+      toast.error("Please describe your food first (e.g. 2 slices of Schäfer glutenfree bread)");
       return;
     }
 
@@ -416,7 +414,7 @@ export default function App() {
     setAiLoading(true);
     toast.info("AI is calculating Desi food macros...");
     try {
-      const result = await analyzeMeal(foodDescriptionAI);
+      const result = await analyzeMeal(mealDesc);
       
       setMealDesc(result.description);
       setMealCals(result.estimated_calories.toString());
@@ -918,68 +916,14 @@ export default function App() {
               </CardContent>
             </Card>
 
-            {/* AI Food scanner & Macro Calculator */}
-            <Card className="bg-neutral-900 border-neutral-800 text-neutral-100 border-primary/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2 text-white">
-                  <Brain className="size-4 text-primary fill-primary/20" /> AI Desi Food Macro Calculator
-                </CardTitle>
-                <CardDescription className="text-neutral-400">Snap a photo of your plate or describe it in plain words</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="food-desc-ai" className="text-xs text-neutral-300">Describe food / portion details</Label>
-                  <Input
-                    id="food-desc-ai"
-                    placeholder="e.g. 3 plates Lahori Murgh Chanay with half a Pide"
-                    value={foodDescriptionAI}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFoodDescriptionAI(e.target.value)}
-                    className="bg-neutral-950 border-neutral-800 text-xs"
-                  />
-                </div>
-                
-                <div className="flex gap-2.5">
-                  {/* Camera Upload button */}
-                  <div className="flex-1">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      capture="environment" 
-                      ref={foodFileRef} 
-                      onChange={handleScanFood} 
-                      className="hidden" 
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={aiLoading}
-                      onClick={() => foodFileRef.current?.click()}
-                      className="w-full bg-neutral-950 hover:bg-neutral-800 text-xs h-9 gap-1.5 font-semibold text-neutral-300"
-                    >
-                      <Camera className="size-4 text-primary" /> Scan Plate Image
-                    </Button>
-                  </div>
-                  
-                  {/* Text Analyzer Button */}
-                  <Button
-                    type="button"
-                    disabled={aiLoading}
-                    onClick={handleAnalyzeFoodText}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-9 font-semibold gap-1.5"
-                  >
-                    <Brain className="size-4" /> Calculate Calories & Macros
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Standard Manual Log Form */}
+            {/* Unified AI-Powered Meal Logger */}
             <form onSubmit={handleLogMeal}>
-              <Card className="bg-neutral-900 border-neutral-800 text-neutral-100">
+              <Card className="bg-neutral-900 border-neutral-800 text-neutral-100 border-primary/10">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-semibold flex items-center gap-2 text-white">
                     <Utensils className="size-5 text-emerald-500" /> Log Meal Details
                   </CardTitle>
+                  <CardDescription className="text-neutral-400">Manual entry with AI auto-fill capability</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                   
@@ -1002,19 +946,55 @@ export default function App() {
                     </Select>
                   </div>
 
-                  {/* Meal Description */}
+                  {/* Meal Description and AI Trigger */}
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="meal-desc" className="text-xs text-neutral-300">What did you eat?</Label>
-                    <Input
-                      id="meal-desc"
-                      placeholder="e.g. 200g Skyr, muesli, 4 boiled eggs"
-                      value={mealDesc}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMealDesc(e.target.value)}
-                      className="bg-neutral-950 border-neutral-800"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="meal-desc"
+                        placeholder="e.g. 2 slices glutenfree Schäfer bread with butter"
+                        value={mealDesc}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMealDesc(e.target.value)}
+                        className="bg-neutral-950 border-neutral-800 flex-1"
+                      />
+                    </div>
+
+                    {/* Integrated AI Assistant Actions */}
+                    <div className="flex gap-2 mt-1">
+                      {/* Text Macro calculation trigger */}
+                      <Button
+                        type="button"
+                        disabled={aiLoading}
+                        onClick={handleAnalyzeFoodText}
+                        className="flex-1 bg-primary/10 hover:bg-primary/20 hover:text-primary text-primary border border-primary/20 text-xs h-8 font-semibold gap-1"
+                      >
+                        <Brain className="size-3.5" /> 🪄 AI Auto-Fill Macros
+                      </Button>
+
+                      {/* Photo scanner trigger */}
+                      <div className="flex-1">
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          capture="environment" 
+                          ref={foodFileRef} 
+                          onChange={handleScanFood} 
+                          className="hidden" 
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={aiLoading}
+                          onClick={() => foodFileRef.current?.click()}
+                          className="w-full bg-neutral-950 border border-neutral-800 hover:bg-neutral-850 hover:text-white text-xs h-8 gap-1 font-semibold text-neutral-400"
+                        >
+                          <Camera className="size-3.5" /> 📷 AI Scan Plate
+                        </Button>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Optional nutrition parameters */}
+                  {/* Calculated/Manual calories & protein parameters */}
                   <div className="flex gap-3">
                     <div className="flex-1 flex flex-col gap-1.5">
                       <Label htmlFor="meal-cals" className="text-xs text-neutral-300">Calories (kcal) - approx</Label>
