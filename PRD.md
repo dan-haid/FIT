@@ -22,10 +22,27 @@ The daily log (`logs/YYYY-MM-DD.md`) will be expanded beyond just meals and calo
 - **Feature:** A "Quick Select" or "Favorites" dropdown in the Meal Logger.
 - **Implementation:** Hardcoded favorite meals (e.g., "Skyr 200g - 125kcal/22g", "4 Boiled Eggs - 280kcal/24g", "City Chicken - 600kcal/60g") will be selectable. When tapped, it auto-fills the description, calories, and protein input fields, saving typing time.
 
+### E. AI Vision "Scan Machine" (Gemini Integration)
+- **Feature:** A "Scan Machine" button in the Workout Logger that uses the device camera to identify gym equipment.
+- **Implementation:** 
+  - An `<input type="file" accept="image/*" capture="environment" />` triggers the native camera or photo library.
+  - The image is compressed, converted to Base64, and sent to the **Google Gemini API (`gemini-1.5-flash`)**.
+  - A strict System Prompt instructs Gemini to return a structured JSON response containing the **Muscle Category**, **Exercise Name**, and a **Form Tip**.
+  - The app automatically parses this JSON and populates the Workout Logger dropdowns, saving the user from manually searching for the exercise.
+
+### F. AI Nutrition & Desi Food Scanner (Gemini Integration)
+- **Feature:** An AI-powered "Analyze Meal" button in the Meal Logger to automatically calculate calories and macros for complex meals, particularly Desi food.
+- **Implementation:**
+  - The user can upload a photo of their plate or type a natural description (e.g., "3 plates Lahori Murgh Chanay with half a Turkish bread").
+  - The request is sent to the Gemini API, injected with a strict System Prompt that includes the user's baseline context (Male, 40yo, 94kg) to provide accurate portion context.
+  - Gemini analyzes the Desi cuisine, estimates the portion sizes, and returns a JSON payload with `description`, `estimated_calories`, and `estimated_protein`.
+  - The app instantly populates the manual entry fields with these calculated macros, allowing the user to review and save them to the daily log.
+
 ## 3. Architecture & Tech Stack
 *   **Tech Stack:** React (Vite), TypeScript, Tailwind CSS, Shadcn UI, Lucide Icons.
 *   **Hosting:** GitHub Pages via GitHub Actions.
 *   **Data Layer:** GitHub REST API utilizing a Personal Access Token stored in `localStorage`.
+*   **AI Integration:** Google Gemini API (`gemini-1.5-flash`) via direct REST call, utilizing an API key stored in `localStorage`.
 *   **Database:** Markdown files (`workout_tracker.md` for lifts/weight, `logs/YYYY-MM-DD.md` for daily entries).
 
 ## 4. Phased Implementation Plan
@@ -43,6 +60,15 @@ The daily log (`logs/YYYY-MM-DD.md`) will be expanded beyond just meals and calo
 - **Workout Logger:** Update the Overload History UI to render a list of the last 3-5 sessions. Implement the massive static exercise list in the select dropdown.
 - **Meal Logger:** Add the "Favorites Quick-Log" button group above the manual entry form.
 
-### Phase 4: Verification & Deployment
+### Phase 4: AI Vision Integration (Gemini)
+- Update the **Settings Tab** to include an input for the Google Gemini API Key.
+- Create `src/lib/gemini.ts` to handle base64 image compression and the REST call to `generativelanguage.googleapis.com`.
+- Add the `<input type="file" capture="environment" />` button to the Workout Logger and link it to the API response parser.
+- Add an "AI Scan Plate / Describe Meal" button to the Meal Logger, linking it to the Gemini API to auto-calculate macros for Desi food based on the user's profile context.
+
+### Phase 5: Verification & Deployment
 - Test markdown string generation to ensure tables and sections don't break.
 - Verify the PWA deployment on GitHub Pages.
+
+## 5. Migration & Rollback
+- Since the database consists of Git-tracked markdown files, any parsing errors or accidental overwrites can be instantly rolled back using standard `git revert` commands in the repository history. No data can be permanently lost.
