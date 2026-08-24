@@ -8,6 +8,7 @@ This file tracks your **body weight progress** and **exercise weight logs (Perso
 
 | Date | Weight (kg) | Weekly Avg / Notes |
 | :--- | :--- | :--- |
+| **2026-08-24** | **94.2 kg** | Logged via PWA |
 | **2026-08-20** | **94.0 kg** | Baseline starting weight |
 
 ---
